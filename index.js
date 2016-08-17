@@ -92,9 +92,9 @@ export default class SparkLine {
    */
 
   render_line(data) {
-    let x = d3.scale.linear().range([0, this.width]);
-    let y = d3.scale.linear().range([0, this.height]);
-    let line = d3.svg.line().interpolate(this.interpolate).x(d => x(d[0])).y(d => y(d[1]));
+    let x = d3.scaleLinear().range([0, this.width]);
+    let y = d3.scaleLinear().range([0, this.height]);
+    let line = d3.line().interpolate(this.interpolate).x(d => x(d[0])).y(d => y(d[1]));
 
     y.domain(d3.extent(data, d => d[1]));
     x.domain(d3.extent(data, d => d[0]));
