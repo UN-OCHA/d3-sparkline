@@ -79,7 +79,6 @@ export default class SparkLine {
   init() {
     let { width, height, target, interpolate, ratio } = this;
     // Get the font size of the target element for use in width height calculation
-    console.log(d3)
     this.chart = d3.select(target).append('svg')
       .attr('class', 'd3-sparkline')
       .attr('width', width)
@@ -92,14 +91,19 @@ export default class SparkLine {
    */
 
   render_line(data) {
-    let x = d3.scaleLinear().range([0, this.width]);
-    let y = d3.scaleLinear().range([0, this.height]);
-    let line = d3.line().interpolate(this.interpolate).x(d => x(d[0])).y(d => y(d[1]));
+    let x = d3.scaleLinear()
+      .range([0, this.width])
+     // .domain(d3.extent(data, function(d) { return d[0] }))
+    let y = d3.scaleLinear()
+      .range([0, this.height])
+     // .domain(d3.extent(data, function(d) { return d[1] }))
 
-    y.domain(d3.extent(data, d => d[1]));
-    x.domain(d3.extent(data, d => d[0]));
+    let line = d3.line().x(function(d){ return x(d[0]) }).y(function(d){ return y(d[1]) });
 
-    this.chart.append('path').datum(data).attr('class', 'sparkline').attr('d', line);
+    this.chart.append('path')
+      .datum(data)
+      .attr('class', 'sparkline')
+      .attr('d', line);
   }
 
   /**

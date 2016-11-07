@@ -5,13 +5,15 @@
   <title>D3-sparkline</title>
 </head>
 <body>
-  <div id="sparkchart">
+  <div id="sparkline">
   </div>
 
   <script src="../build/index.js"></script>
   <script>
-    var sparkchart = new SparkLine({})
-    sparkchart.render([11, 22, 33, 11, 22, 33])
+    var sparkchart = new SparkLine({
+      target: '#sparkline'
+    })
+    sparkchart.render([11, 11], [22, 22], [33, 33])
   </script>
 </body>
 </html>
