@@ -4,7 +4,6 @@ import * as d3 from 'd3';
 /**
  * default config
  */
-
 const defaults = {
   /**
    * The element to render the svg inside
@@ -35,13 +34,11 @@ const defaults = {
 /**
  * SparkLine
  */
-
 export default class SparkLine {
 
   /**
    * construct with the given `config`
    */
-
   constructor(config) {
     this.set(config);
     this.set_dimensions();
@@ -51,7 +48,6 @@ export default class SparkLine {
   /**
    * assign the configuration
    */
-
   set(config) {
     Object.assign(this, defaults, config);
   }
@@ -59,7 +55,6 @@ export default class SparkLine {
   /**
    * set the dimensions (can be dynamic if auto is set)
    */
-
   set_dimensions() {
     if (!this.auto) {
       this.width = this.font_size * this.ratio;
@@ -75,7 +70,6 @@ export default class SparkLine {
   /**
    * initialize the chart area
    */
-
   init() {
     let { width, height, target, interpolate, ratio } = this;
     // Get the font size of the target element for use in width height calculation
@@ -89,27 +83,33 @@ export default class SparkLine {
   /**
    * render the chart line
    */
-
   render_line(data) {
-    let x = d3.scaleLinear()
-      .range([0, this.width])
-     // .domain(d3.extent(data, function(d) { return d[0] }))
-    let y = d3.scaleLinear()
-      .range([0, this.height])
-     // .domain(d3.extent(data, function(d) { return d[1] }))
+    let self = this
 
-    let line = d3.line().x(function(d){ return x(d[0]) }).y(function(d){ return y(d[1]) });
+    let y = d3.scaleLinear()
+      .domain(d3.extent(data, (d) => { return d }))
+      .range([self.height, 0])
+
+    let x = d3.scaleLinear()
+      .domain([0, data.length])
+      .range([0, self.width])
+
+    let line = d3.line()
+      .x(function(d, i) { return x(i) })
+      .y(function(d) { return y(d) })
+
 
     this.chart.append('path')
       .datum(data)
       .attr('class', 'sparkline')
+      .attr('fill', 'transparent')
+      .attr('stroke', '#000')
       .attr('d', line);
   }
 
   /**
    * render the chart
    */
-
   render(data) {
     this.render_line(data);
   }
@@ -117,7 +117,6 @@ export default class SparkLine {
   /**
    * update the chart with new `data`
    */
-
   update(data) {
     this.render(data, options);
   }
