@@ -83,11 +83,16 @@ export default class SparkLine {
   /**
    * render the chart line
    */
-  render_line(data) {
-    let self = this
+  render_line(data, baseline) {
+    let self = this;
+
+    var data_range = d3.extent(data, (d) => { return d });
+    if (typeof baseline != 'undefined') {
+      data_range[1] = Math.max(data_range[1], baseline);
+    }
 
     let y = d3.scaleLinear()
-      .domain(d3.extent(data, (d) => { return d }))
+      .domain(data_range)
       .range([self.height, 0])
 
     let x = d3.scaleLinear()
@@ -98,27 +103,39 @@ export default class SparkLine {
       .x(function(d, i) { return x(i) })
       .y(function(d) { return y(d) })
 
-
     this.chart.append('path')
       .datum(data)
       .attr('class', 'sparkline')
       .attr('fill', 'transparent')
-      .attr('stroke', '#000')
+      .attr('stroke', 'red')
       .attr('d', line);
+
+    if (typeof baseline != 'undefined') {
+      let line_baseline = d3.line()
+        .x(function(d, i) { return x(i) })
+        .y(function(d, i) { return y(baseline) })
+
+      this.chart.append('path')
+        .datum(data)
+        .attr('class', 'sparkline-baseline')
+        .attr('fill', 'transparent')
+        .attr('stroke', '#000')
+        .attr('d', line_baseline);
+      }
   }
 
   /**
    * render the chart
    */
-  render(data) {
-    this.render_line(data);
+  render(data, baseline) {
+    this.render_line(data, baseline);
   }
 
   /**
    * update the chart with new `data`
    */
-  update(data) {
-    this.render(data, options);
+  update(data, baseline) {
+    this.render(data, baseline, options);
   }
 }
 
