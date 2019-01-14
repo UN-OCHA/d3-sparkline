@@ -26,6 +26,26 @@ const defaults = {
   auto: false,
 
   /**
+   * The stroke color of the line chart.
+   */
+  color: 'red',
+
+  /**
+   * The stroke width of the line chart.
+   */
+  stroke_width: 1,
+
+  /**
+   * The stroke color of the baseline chart.
+   */
+  color_baseline: 'black',
+
+  /**
+   * The stroke width of the basline chart.
+   */
+  stroke_width_baseline: 1,
+
+  /**
    * interpolation method
    */
   interpolate: 'basis'
@@ -107,7 +127,8 @@ export default class SparkLine {
       .datum(data)
       .attr('class', 'sparkline')
       .attr('fill', 'transparent')
-      .attr('stroke', 'red')
+      .attr('stroke', self.color)
+      .attr('stroke-width', self.stroke_width)
       .attr('d', line);
 
     if (typeof baseline != 'undefined') {
@@ -119,7 +140,8 @@ export default class SparkLine {
         .datum(data)
         .attr('class', 'sparkline-baseline')
         .attr('fill', 'transparent')
-        .attr('stroke', '#000')
+        .attr('stroke', self.color_baseline)
+        .attr('stroke-width', self.stroke_width_baseline)
         .attr('d', line_baseline);
       }
   }
