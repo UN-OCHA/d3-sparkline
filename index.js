@@ -36,19 +36,34 @@ const defaults = {
   stroke_width: 1,
 
   /**
+   * The line type of the line chart.
+   */
+  dasharray: '0',
+
+  /**
    * The stroke color of the baseline chart.
    */
   color_baseline: 'black',
 
   /**
-   * The stroke width of the basline chart.
+   * The stroke width of the baseline chart.
    */
   stroke_width_baseline: 1,
 
   /**
-   * interpolation method
+   * The line type of the baseline chart.
    */
-  interpolate: 'basis'
+  dasharray_baseline: '0',
+
+  /**
+   * The radius of the marker points.
+   */
+  point_radius: 6,
+
+  /**
+   * A callbackc for the tooltip content.
+   */
+  tooltip_callback: null
 };
 
 /**
@@ -91,13 +106,19 @@ export default class SparkLine {
    * initialize the chart area
    */
   init() {
-    let { width, height, target, interpolate, ratio } = this;
+    let { width, height, target, ratio } = this;
     // Get the font size of the target element for use in width height calculation
     this.chart = d3.select(target).append('svg')
       .attr('class', 'd3-sparkline')
       .attr('width', width)
-      .attr('height', height)
+      .attr('height', height + 6)
+      .style('padding', this.point_radius + 'px')
+      .style('overflow', 'visible')
       .append('g');
+  }
+
+  hasTooltips() {
+    return this.tooltip_callback != 'undefined' && this.tooltip_callback != null;
   }
 
   /**
@@ -129,6 +150,8 @@ export default class SparkLine {
       .attr('fill', 'transparent')
       .attr('stroke', self.color)
       .attr('stroke-width', self.stroke_width)
+      .attr('stroke-dasharray', self.dasharray ? self.dasharray : ("0"))
+      .style("stroke-linecap", "round")
       .attr('d', line);
 
     if (typeof baseline != 'undefined') {
@@ -142,24 +165,74 @@ export default class SparkLine {
         .attr('fill', 'transparent')
         .attr('stroke', self.color_baseline)
         .attr('stroke-width', self.stroke_width_baseline)
+        .attr('stroke-dasharray', self.dasharray_baseline ? self.dasharray_baseline : ("0"))
+        .style("stroke-linecap", "round")
         .attr('d', line_baseline);
-      }
+    }
+
+    // Define the div for the tooltip.
+    if (self.hasTooltips()) {
+      var tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style('background-color', 'black')
+        .style('color', 'white')
+        .style('border-radius', '3px  ')
+        .style('display', 'inline-block')
+        .style('position', 'absolute')
+        .style('z-index', '10')
+        .style('padding', '0.5rem')
+        .style('opacity', '0.9')
+        .style("visibility", 'hidden');
+    }
+
+    // Add the scatterplot.
+    this.chart.selectAll("dot")
+      .data(data)
+      .enter().append("circle")
+      .attr("r", self.point_radius)
+      .attr("cx", function(d, i) { return x(i); })
+      .attr("cy", function(d) { return y(d); })
+      .on("mouseover", function(d, i) {
+        if (self.hasTooltips()) {
+
+          // Set the tooltip content.
+          tooltip.html(self.tooltip_callback(d, i));
+
+          // Position the tooltip-
+          let tooltip_width = tooltip.node().getBoundingClientRect().width;
+          let tooltip_height = tooltip.node().getBoundingClientRect().height;
+          tooltip.style("left", (d3.event.pageX - d3.event.offsetX + d3.event.target.cx.baseVal.value - 2 * d3.event.target.r.baseVal.value) + "px")
+            .style("top", (d3.event.pageY - tooltip_height - 10) + "px");
+
+          // Make the tooltip visible.
+          tooltip.transition()
+            .duration(0)
+            .style("visibility", 'visible');
+        }
+      })
+      .on("mouseout", function(d) {
+        if (self.hasTooltips()) {
+          tooltip.transition()
+            .duration(0)
+            .style("visibility", 'hidden');
+        }
+      });
   }
 
   /**
-   * render the chart
+   * Render the chart
    */
   render(data, baseline) {
     this.render_line(data, baseline);
   }
 
   /**
-   * update the chart with new `data`
+   * Update the chart with new `data`.
    */
   update(data, baseline) {
     this.render(data, baseline, options);
   }
 }
 
-// Sets on window
+// Sets on window.
 global.SparkLine = SparkLine
