@@ -58,12 +58,12 @@ const defaults = {
   /**
    * The radius of the marker points.
    */
-  point_radius: 6,
+  point_radius: 3,
 
   /**
-   * A callbackc for the tooltip content.
+   * A callback for the tooltip content.
    */
-  tooltip_callback: null
+  tooltip: null
 };
 
 /**
@@ -108,17 +108,28 @@ export default class SparkLine {
   init() {
     let { width, height, target, ratio } = this;
     // Get the font size of the target element for use in width height calculation
-    this.chart = d3.select(target).append('svg')
+    this.chart = d3.select(target).style('position', 'relative')
+      .append('svg')
       .attr('class', 'd3-sparkline')
       .attr('width', width)
-      .attr('height', height + 6)
+      .attr('height', height + 2 * this.point_radius)
       .style('padding', this.point_radius + 'px')
       .style('overflow', 'visible')
       .append('g');
+
+    if (this.hasTooltips) {
+      this.tooltip_container = d3.select('body').append("div")
+        .attr("class", "tooltip top")
+        .style('opacity', '0.9')
+        .style('position', 'absolute')
+        .style("visibility", 'hidden');
+      this.focussed_point = null;
+    }
+
   }
 
   hasTooltips() {
-    return this.tooltip_callback != 'undefined' && this.tooltip_callback != null;
+    return this.tooltip != 'undefined' && this.tooltip != null;
   }
 
   /**
@@ -157,7 +168,7 @@ export default class SparkLine {
     if (typeof baseline != 'undefined') {
       let line_baseline = d3.line()
         .x(function(d, i) { return x(i) })
-        .y(function(d, i) { return y(baseline) })
+        .y(function(d, i) { return y(baseline) });
 
       this.chart.append('path')
         .datum(data)
@@ -170,19 +181,22 @@ export default class SparkLine {
         .attr('d', line_baseline);
     }
 
-    // Define the div for the tooltip.
-    if (self.hasTooltips()) {
-      var tooltip = d3.select("body").append("div")
-        .attr("class", "tooltip")
-        .style('background-color', 'black')
-        .style('color', 'white')
-        .style('border-radius', '3px  ')
-        .style('display', 'inline-block')
-        .style('position', 'absolute')
-        .style('z-index', '10')
-        .style('padding', '0.5rem')
-        .style('opacity', '0.9')
-        .style("visibility", 'hidden');
+    // Add tooltip behaviors and make sure the tooltip stays open while
+    // hovering with the mouse.
+    this.checkTooltipVisibility = function(_this) {
+      let self = _this;
+      setTimeout(function () {
+        if (!self.tooltip_container.node().matches(':hover') && self.focussed_point != null && !self.focussed_point.matches(':hover')) {
+        // Make the tooltip invisible.
+        self.tooltip_container.transition()
+          .duration(0)
+          .style("visibility", 'hidden');
+        self.focussed_point = null;
+        }
+        else {
+          self.checkTooltipVisibility(_this);
+        }
+      }, 100);
     }
 
     // Add the scatterplot.
@@ -191,31 +205,43 @@ export default class SparkLine {
       .enter().append("circle")
       .attr("r", self.point_radius)
       .attr("cx", function(d, i) { return x(i); })
+      .attr("cy", function(d) { return y(d); });
+
+    // Add a transparent layer on top to extend the mouse areas.
+    this.chart.selectAll("dot")
+      .data(data)
+      .enter().append("circle")
+      .attr("r", 10)
+      .attr('fill', 'transparent')
+      .attr("cx", function(d, i) { return x(i); })
       .attr("cy", function(d) { return y(d); })
-      .on("mouseover", function(d, i) {
-        if (self.hasTooltips()) {
-
-          // Set the tooltip content.
-          tooltip.html(self.tooltip_callback(d, i));
-
-          // Position the tooltip-
-          let tooltip_width = tooltip.node().getBoundingClientRect().width;
-          let tooltip_height = tooltip.node().getBoundingClientRect().height;
-          tooltip.style("left", (d3.event.pageX - d3.event.offsetX + d3.event.target.cx.baseVal.value - 2 * d3.event.target.r.baseVal.value) + "px")
-            .style("top", (d3.event.pageY - tooltip_height - 10) + "px");
-
-          // Make the tooltip visible.
-          tooltip.transition()
-            .duration(0)
-            .style("visibility", 'visible');
+      .on("mouseenter", function(d, i) {
+        if (!self.hasTooltips()) {
+          return;
         }
+
+        self.focussed_point = this;
+
+        // Set the tooltip content.
+        self.tooltip_container.html(self.tooltip(d, i));
+
+        // Position the tooltip-
+        let tooltip_width = self.tooltip_container.node().getBoundingClientRect().width;
+        let tooltip_height = self.tooltip_container.node().getBoundingClientRect().height;
+        self.tooltip_container
+          .style("left", (d3.event.pageX - d3.event.offsetX + d3.event.target.cx.baseVal.value - tooltip_width / 2 + 2) + "px")
+          .style("top", (d3.event.pageY - d3.event.offsetY + d3.event.target.cy.baseVal.value - tooltip_height - 2) + "px");
+
+        // Make the tooltip visible.
+        self.tooltip_container.transition()
+          .duration(0)
+          .style("visibility", 'visible');
       })
-      .on("mouseout", function(d) {
-        if (self.hasTooltips()) {
-          tooltip.transition()
-            .duration(0)
-            .style("visibility", 'hidden');
+      .on("mouseleave", function(d) {
+        if (!self.hasTooltips()) {
+          return;
         }
+        self.checkTooltipVisibility(self);
       });
   }
 
