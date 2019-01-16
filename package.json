@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start": "watchify index.js -o build/index.js -dv",
-    "build": "browserify index.js -o build/index.js -dv"
+    "start": "watchify src/index.js -o d3-sparkline.min.js -dv",
+    "build": "browserify src/index.js -o d3-sparkline.min.js -dv"
   },
   "dependencies": {
     "d3": "^4.2.2"
