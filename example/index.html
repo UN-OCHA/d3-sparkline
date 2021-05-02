@@ -18,6 +18,7 @@
     var sparkchart = new SparkLine({
       target: '#sparkline',
       font_size: 44,
+      data: [865,609,991,974,1260,1241,1158,1363,1454,1352],
     });
     var sparkchart_baseline = new SparkLine({
       target: '#sparkline-baseline',
@@ -25,12 +26,14 @@
       stroke_width: 3,
       stroke_width_baseline: 2,
       point_radius: 2,
-      tooltip: function(d) {
-        return d;
+      data: [865,609,991,974,1260,1241,1158,1363,1454,1352],
+      baseline: 30,
+      tooltip: function(i) {
+        return data[i];
       }
      });
-    sparkchart.render([865,609,991,974,1260,1241,1158,1363,1454,1352])
-    sparkchart_baseline.render([11, 12, 18, 15, 19, 21, 25, 28, 33, 34, 40], 30)
+    sparkchart.render()
+    sparkchart_baseline.render()
   </script>
 </body>
 </html>

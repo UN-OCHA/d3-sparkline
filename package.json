@@ -1,18 +1,11 @@
 {
   "scripts": {
-    "start": "watchify src/index.js -o d3-sparkline.min.js -dv",
-    "build": "browserify src/index.js -o d3-sparkline.min.js -dv"
+    "minify": "minify d3-sparkline.js > d3-sparkline.min.js"
   },
   "dependencies": {
-    "d3": "^4.2.2"
+    "d3": "^6.7.0"
   },
   "devDependencies": {
-    "babel-preset-es2015": "^6.13.2",
-    "babelify": "^7.3.0",
-    "browserify": "^13.1.0",
-    "watchify": "^3.7.0"
-  },
-  "browserify": {
-    "transform": [["babelify", { "presets": ["es2015"] }]]
+    "minify": "^7.0.1"
   }
 }
