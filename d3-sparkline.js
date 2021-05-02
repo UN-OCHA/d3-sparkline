@@ -5,28 +5,29 @@
 }(this, (function (global, d3) { 'use strict';
 
   /**
-   * default config
+   * The default config.
    */
   const defaults = {
+
     /**
-     * The element to render the svg inside
+     * The element to render the svg inside.
      */
     target: '#sparkline',
 
     /**
-     * width height ratio (5 is recommended)
+     * Width height ratio (5 is recommended).
      */
     ratio: 5,
 
     /**
-     * font size used in width / height calculation
+     * Inherit size from parent if set to "parent".
      */
-    font_size: 12,
+    size: null,
 
     /**
-     * when auto is true font size is determined by the parent element
+     * Optional font size used in width / height calculation.
      */
-    auto: false,
+    font_size: null,
 
     /**
      * The stroke color of the line chart.
@@ -72,7 +73,7 @@
   class SparkLine {
 
     /**
-     * construct with the given `config`
+     * Construct with the given config.
      */
     constructor(config) {
       this.set(config);
@@ -81,38 +82,41 @@
     }
 
     /**
-     * assign the configuration
+     * Assign the configuration.
      */
     set(config) {
       Object.assign(this, defaults, config);
     }
 
     /**
-     * set the dimensions (can be dynamic if auto is set)
+     * Set the dimensions.
      */
     set_dimensions() {
-      if (!this.auto) {
+      if (this.font_size) {
+        // If a font size is given, use that.
         this.width = this.font_size * this.ratio;
-        this.height = this.font_size;
+      } else if (this.size == 'parent') {
+        // If size is set to 'parent', inherit it's width.
+        var element = document.querySelector(this.target);
+        this.width = parseInt(window.getComputedStyle(element, null).getPropertyValue('width'));
       } else {
-        let element = document.querySelector(target);
-        let font_size = parseInt(window.getComputedStyle(element, null).getPropertyValue('font-size'));
+        // In all other cases, inherit the font size and use that for the width calculation.
+        var _element = document.querySelector(this.target);
+        var font_size = parseInt(window.getComputedStyle(_element, null).getPropertyValue('font-size'));
         this.width = font_size * this.ratio;
-        this.height = font_size;
       }
+      this.height = this.width / this.ratio;
     }
 
     /**
-     * initialize the chart area
+     * Initialize the chart area.
      */
     init() {
-      let { width, height, target, ratio } = this;
-      // Get the font size of the target element for use in width height calculation
-      this.chart = d3.select(target).style('position', 'relative')
+      this.chart = d3.select(this.target).style('position', 'relative')
         .append('svg')
         .attr('class', 'd3-sparkline')
-        .attr('width', width)
-        .attr('height', height + 2 * this.point_radius)
+        .attr('width', this.width)
+        .attr('height', this.height + 2 * this.point_radius)
         .style('padding', this.point_radius + 'px')
         .style('overflow', 'visible')
         .append('g');
@@ -128,12 +132,15 @@
 
     }
 
+    /**
+     * Check if there is a tooltip callback.
+     */
     hasTooltips() {
       return this.tooltip != 'undefined' && this.tooltip != null;
     }
 
     /**
-     * render the chart line
+     * Render the chart line.
      */
     render_line(data, baseline) {
       let self = this;
@@ -148,7 +155,7 @@
         .range([self.height, 0])
 
       let x = d3.scaleLinear()
-        .domain([0, data.length])
+        .domain([0, data.length - 1])
         .range([0, self.width])
 
       let line = d3.line()
@@ -247,17 +254,19 @@
     }
 
     /**
-     * Render the chart
+     * Render the chart.
      */
     render() {
       this.render_line(this.data, this.baseline);
     }
 
     /**
-     * Update the chart with new `data`.
+     * Update the chart with new data.
      */
-    update() {
-      this.render(this.data, this.baseline, options);
+    update(data, baseline) {
+      this.data = data;
+      this.baseline = baseline;
+      this.render();
     }
   }
 
