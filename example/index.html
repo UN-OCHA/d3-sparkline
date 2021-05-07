@@ -3,37 +3,61 @@
 <head>
   <meta charset="utf8">
   <title>D3-sparkline</title>
+  <script src="https://unpkg.com/d3@6.7.0/dist/d3.min.js"></script>
+  <script src="../d3-sparkline.js"></script>
+  <style>
+    .tooltip {
+        background-color: white;
+        border: 1px solid lightgray;
+        border-radius: 3px;
+        padding: 3px 5px;
+        opacity: 1;
+    }
+  </style>
 </head>
 <body>
+
   <p>Sparkline simple</p>
-  <div id="sparkline">
-  </div>
+  <div id="sparkline"></div>
+
+  <p>Sparkline with tooltips</p>
+  <div id="sparkline-tooltips"></div>
 
   <p>Sparkline with baseline</p>
-  <div id="sparkline-baseline">
-  </div>
+  <div id="sparkline-baseline"></div>
 
-  <script src="../d3-sparkline.min.js"></script>
   <script>
-    var sparkchart = new SparkLine({
+
+    let data = [865,609,991,974,1260,1241,1158,1363,1454,1352];
+    let sparkchart = new SparkLine({
       target: '#sparkline',
       font_size: 44,
-      data: [865,609,991,974,1260,1241,1158,1363,1454,1352],
+      data: data,
     });
-    var sparkchart_baseline = new SparkLine({
-      target: '#sparkline-baseline',
+    sparkchart.render();
+
+    let sparkchart_tooltips = new SparkLine({
+      target: '#sparkline-tooltips',
       font_size: 44,
-      stroke_width: 3,
-      stroke_width_baseline: 2,
-      point_radius: 2,
-      data: [865,609,991,974,1260,1241,1158,1363,1454,1352],
-      baseline: 30,
+      data: data,
       tooltip: function(i) {
         return data[i];
       }
+    });
+    sparkchart_tooltips.render();
+
+    let sparkchart_baseline = new SparkLine({
+      target: '#sparkline-baseline',
+      font_size: 44,
+      data: data,
+      baseline: 1000,
+      tooltip: function(i) {
+        return 'value: ' + data[i] + '<br />baseline: ' + this.baseline;
+      }
      });
-    sparkchart.render()
-    sparkchart_baseline.render()
+    sparkchart_baseline.render();
+
   </script>
+
 </body>
 </html>
