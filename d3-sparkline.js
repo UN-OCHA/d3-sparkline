@@ -123,7 +123,7 @@
 
       if (this.hasTooltips()) {
         this.tooltip_container = d3.select('body').append("div")
-          .attr("class", "tooltip top")
+          .attr("class", "d3-sparkline-tooltip tooltip top")
           .style('opacity', '0.9')
           .style('position', 'absolute')
           .style("visibility", 'hidden');
