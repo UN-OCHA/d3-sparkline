@@ -3,7 +3,7 @@
     "minify": "minify d3-sparkline.js > d3-sparkline.min.js"
   },
   "dependencies": {
-    "d3": "^6.7.0"
+    "d3": "^7.6.1"
   },
   "devDependencies": {
     "minify": "^7.0.1"
