@@ -140,12 +140,48 @@
     }
 
     /**
+     * See if the given index represents a middle point between 2 valid points.
+     */
+    isMiddlePoint(data, i) {
+      return this.hasPoint(data, i - 1) && this.hasPoint(data, i + 1);
+    }
+
+    /**
+     * See if the given index represents a point.
+     *
+     * A point is a numerical value that is not null.
+     */
+    hasPoint(data, i) {
+      return typeof data[i] == 'number' && !Number.isNaN(data[i]);
+    }
+
+    /**
+     * Get the y coordinate for possible null values.
+     *
+     * Null values appearing in the middle of a data set will be interpolated.
+     */
+    getNullableY(y, d, i, data) {
+      if (Number.isNaN(d)) {
+        if (this.isMiddlePoint(data, i)) {
+          // If we have a predecessor and a successor, calculate the
+          // average and use that.
+          return y((data[i - 1] + data[i + 1]) / 2)
+        }
+        return y(0);
+      }
+      else {
+        return y(d);
+      }
+    }
+
+    /**
      * Render the chart line.
      */
     render_line(data, baseline) {
       let self = this;
 
       var data_range = d3.extent(data, (d) => { return d });
+
       if (typeof baseline != 'undefined') {
         data_range[1] = Math.max(data_range[1], baseline);
       }
@@ -160,13 +196,41 @@
 
       let line = d3.line()
         .x(function(d, i) { return x(i) })
-        .y(function(d) { return y(d) })
+        .y(function(d, i) { return self.getNullableY(y, d, i, data) });
+
+      // Create a unique id for the gradient.
+      let gradient_id = 'gradient-' + URL.createObjectURL(new Blob([])).slice(-36);
+
+      // Create the gradient, which controls the color for the line segments.
+      // We want the visible parts of the sparkline to have our standard color,
+      // and the invisible parts to be transparent.
+      var defs = this.chart.append("defs");
+      var gradient = defs.append("linearGradient")
+        .attr("id", gradient_id)
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", "0%")
+        .attr("x2", "100%");
+
+      let max_x = x(data.length - 1);
+      for (var i = 0; i < data.length; i++) {
+
+        // Define the segment color.
+        let color = Number.isNaN(data[i]) && !self.isMiddlePoint(data, i) ? 'transparent' : self.color;
+
+        gradient.append("stop")
+          .attr("offset", (1 / max_x * x(i)))
+          .attr("stop-color", color);
+
+        gradient.append("stop")
+          .attr("offset", (1 / max_x * x(i + 1)))
+          .attr("stop-color", color);
+      }
 
       this.chart.append('path')
         .datum(data)
         .attr('class', 'sparkline')
         .attr('fill', 'transparent')
-        .attr('stroke', self.color)
+        .attr("stroke", "url(#" + gradient_id + ")")
         .attr('stroke-width', self.stroke_width)
         .attr('stroke-dasharray', self.dasharray ? self.dasharray : ("0"))
         .style("stroke-linecap", "round")
@@ -212,7 +276,8 @@
         .enter().append("circle")
         .attr("r", self.point_radius)
         .attr("cx", function(d, i) { return x(i); })
-        .attr("cy", function(d) { return y(d); });
+        .attr("cy", function(d, i) { return self.getNullableY(y, d, i, data); })
+        .attr("class", function(d, i) { return Number.isNaN(d) ? 'hidden' : ''});
 
       // Add a transparent layer on top to extend the mouse areas.
       this.chart.selectAll("dot")
@@ -221,17 +286,22 @@
         .attr("r", 10)
         .attr('fill', 'transparent')
         .attr("cx", function(d, i) { return x(i); })
-        .attr("cy", function(d) { return y(d); })
+        .attr("cy", function(d, i) { return self.getNullableY(y, d, i, data); })
         .attr("i", function(d, i) { return i; })
         .on("mouseenter", function(event, d) {
           if (!self.hasTooltips()) {
             return;
           }
 
+          let tooltip_content = self.tooltip(event.target.attributes.i.value);
+          if (!tooltip_content) {
+            return;
+          }
+
           self.focussed_point = this;
 
           // Set the tooltip content.
-          self.tooltip_container.html(self.tooltip(event.target.attributes.i.value));
+          self.tooltip_container.html(tooltip_content);
 
           // Position the tooltip.
           let tooltip_width = self.tooltip_container.node().getBoundingClientRect().width;
