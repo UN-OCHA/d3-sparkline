@@ -143,7 +143,12 @@
      * See if the given index represents a middle point between 2 valid points.
      */
     isMiddlePoint(data, i) {
-      return this.hasPoint(data, i - 1) && this.hasPoint(data, i + 1);
+      let index_prev = this.getPreviousPointIndex(data, i);
+      let index_next = this.getNextPointIndex(data, i);
+      if (index_prev === null || index_next === null) {
+        return false;
+      }
+      return this.hasPoint(data, this.getPreviousPointIndex(data, i)) && this.hasPoint(data, this.getNextPointIndex(data, i));
     }
 
     /**
@@ -156,6 +161,36 @@
     }
 
     /**
+     * Get the index of the previous point.
+     */
+    getPreviousPointIndex(data, i) {
+      if (i <= 0) {
+        return null;
+      }
+      for (let j = i - 1; j >= 0; j--) {
+        if (this.hasPoint(data, j)) {
+          return j;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Get the index of the next point.
+     */
+    getNextPointIndex(data, i) {
+      if (i >= data.length - 1) {
+        return null;
+      }
+      for (let j = i + 1; j < data.length; j++) {
+        if (this.hasPoint(data, j)) {
+          return j;
+        }
+      }
+      return null;
+    }
+
+    /**
      * Get the y coordinate for possible null values.
      *
      * Null values appearing in the middle of a data set will be interpolated.
@@ -165,7 +200,9 @@
         if (this.isMiddlePoint(data, i)) {
           // If we have a predecessor and a successor, calculate the
           // average and use that.
-          return y((data[i - 1] + data[i + 1]) / 2)
+          let index_prev = this.getPreviousPointIndex(data, i);
+          let index_next = this.getNextPointIndex(data, i);
+          return y((data[index_prev] + data[index_next]) / 2)
         }
         return y(0);
       }
@@ -212,10 +249,16 @@
         .attr("x2", "100%");
 
       let max_x = x(data.length - 1);
-      for (var i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.length - 1; i++) {
 
         // Define the segment color.
-        let color = Number.isNaN(data[i]) && !self.isMiddlePoint(data, i) ? 'transparent' : self.color;
+        let color = self.color;
+        if (Number.isNaN(data[i]) && !self.isMiddlePoint(data, i)) {
+          color = 'transparent';
+        }
+        if (!self.getNextPointIndex(data, i)) {
+          color = 'transparent';
+        }
 
         gradient.append("stop")
           .attr("offset", (1 / max_x * x(i)))
