@@ -204,7 +204,10 @@
           let index_next = this.getNextPointIndex(data, i);
           return y((data[index_prev] + data[index_next]) / 2)
         }
-        return y(0);
+        // Otherwhise just use the average of all data points to place this
+        // data point. This prevents visual artifacts on data sets that have
+        // very high numbers, compared to placing the point at y(0).
+        return y(Math.min(...data.filter((value) => !Number.isNaN(value))));
       }
       else {
         return y(d);
