@@ -198,11 +198,11 @@
     getNullableY(y, d, i, data) {
       if (Number.isNaN(d)) {
         if (this.isMiddlePoint(data, i)) {
-          // If we have a predecessor and a successor, calculate the
-          // average and use that.
+          // If we have a predecessor and a successor, we use a linear
+          // interpolation to find the middle values.
           let index_prev = this.getPreviousPointIndex(data, i);
           let index_next = this.getNextPointIndex(data, i);
-          return y((data[index_prev] + data[index_next]) / 2)
+          return y(data[index_prev] + (data[index_next] - data[index_prev]) / (index_next - index_prev) * (i - index_prev));
         }
         // Otherwhise just use the average of all data points to place this
         // data point. This prevents visual artifacts on data sets that have
